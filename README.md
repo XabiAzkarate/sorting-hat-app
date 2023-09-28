@@ -4,7 +4,7 @@ A Vue.js application that mimics the sorting hat functionality from the Harry Po
 ## Instructions to Build and Run the Project
 1. Clone the repository:
 ```
-git clone [REPOSITORY_LINK]
+git clone https://github.com/XabiAzkarate/sorting-hat-app.git
 ```
 2. Navigate to the project directory:
 ```
