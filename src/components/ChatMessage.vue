@@ -26,7 +26,6 @@ export default {
 .message-content {
   display: inline-block;
   padding: 10px 20px;
-  border-radius: 5px;
   max-width: 80%;
 }
 
@@ -34,6 +33,7 @@ export default {
   background-color: #270d3b;
   color: white;
   align-self: flex-end;
+  border-radius: 10px 10px 0 10px;
 }
 
 .message-content.hat {
@@ -41,5 +41,6 @@ export default {
   color: black;
   align-self: flex-start;
   justify-content: flex-start;
+  border-radius: 10px 10px 10px 0;
 }
 </style>

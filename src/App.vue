@@ -44,7 +44,8 @@ export default {
       scores: { g: 0, r: 0, h: 0, s: 0 },
       username: '',
       isNameAsked: false,
-      isTestComplete: false
+      isTestComplete: false,
+      answerSelected: false
     };
   },
   computed: {
@@ -71,6 +72,12 @@ export default {
   },
   methods: {
     selectAnswer(answer) {
+      if (this.answerSelected) return;
+      this.answerSelected = true;
+      setTimeout(() => {
+        this.answerSelected = false;
+      }, 800);
+
       if (!this.isNameAsked) {
         this.username = answer.title;
         this.isNameAsked = true;
@@ -106,6 +113,10 @@ export default {
       }
     },
     askName() {
+      if (!this.username.trim() || this.username.length > 50) {
+        alert("Please enter a valid name (1-50 characters).");
+        return;
+      }
       this.isNameAsked = true;
       this.messages.push({
         id: Date.now(),
@@ -164,12 +175,16 @@ export default {
 </script>
 
 <style>
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
+
 body {
   margin: 0;
   background-image: url('/public/images/hat image.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
+  font-family: 'Open Sans', sans-serif;
 }
 
 #app {
@@ -227,6 +242,7 @@ button {
   cursor: pointer;
   width: calc(33% - 10px); /* Divide by three and subtract margin for desktop view */
   text-align: center;
+  transition: transform 0.3s, background-color 0.3s;
 }
 
 /* Media query for screens with a width of 768 pixels or less */
@@ -235,10 +251,24 @@ button {
     width: 90%; /* Make buttons take almost the full width on small screens */
     margin: 10px 5%; /* Center the buttons with a 5% margin on each side */
   }
+
+  .input-block {
+    flex-direction: column;
+  }
+  .input-block input {
+    padding: 10px;
+    width: auto;
+    margin-right: 0;
+  }
 }
 
 button:hover {
   background-color: #2c3e50; /* Slight color change on hover */
+  transform: scale(1.02);
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 /* Enter and leave transitions */
@@ -278,7 +308,6 @@ input {
 }
 
 .input-block button {
-  width: 40%;
   font-weight: bold;
 }
 
