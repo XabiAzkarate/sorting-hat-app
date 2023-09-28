@@ -4,24 +4,24 @@
   <div id="app">
     <h1 class="app-title">The Sorting Hat</h1>
     <div class="chat-window">
-      <transition-group name="list" tag="div">
-          <ChatMessage 
-            v-for="message in messages" 
-            :key="message.id"
-            :content="message.content"
-            :sender="message.sender"
-          />
-        </transition-group>
+      <ChatMessage 
+        v-for="message in messages" 
+        :key="message.id"
+        :content="message.content"
+        :sender="message.sender"
+      />
     </div>
-
-    <div v-if="currentQuestion" class="answers">
+    <div v-if="!isNameAsked" class="input-block">
+      <input type="text" v-model="username" @keyup.enter="askName" placeholder="Enter your name" />
+      <button @click="askName">Submit</button>
+    </div>
+    <div v-else-if="currentQuestion && !isTestComplete" class="answers">
       <button v-for="(answer, index) in currentQuestion.answers" :key="index" @click="selectAnswer(answer)">
         {{ answer.title }}
       </button>
     </div>
-
-    <div v-else>
-      Your house is: {{ determinedHouse }}
+    <div v-if="isTestComplete" class="result">
+      Congratulations, {{ username }}! Your house is: {{ determinedHouse }}
     </div>
   </div>
 </template>
@@ -39,7 +39,10 @@ export default {
       questions: questionsData,
       messages: [],
       currentQuestionIndex: 0,
-      scores: { g: 0, r: 0, h: 0, s: 0 }
+      scores: { g: 0, r: 0, h: 0, s: 0 },
+      username: '',
+      isNameAsked: false,
+      isTestComplete: false
     };
   },
   computed: {
@@ -66,12 +69,20 @@ export default {
   },
   methods: {
     selectAnswer(answer) {
+      if (!this.isNameAsked) {
+        this.username = answer.title;
+        this.isNameAsked = true;
+        this.messages.push({
+          content: this.currentQuestion.title,
+          sender: 'hat'
+        });
+        return;
+      }
       for (let house in answer.scores) {
         this.scores[house] += answer.scores[house];
       }
       this.messages.push({ content: answer.title, sender: 'user' });
 
-      // Check if it's the last question
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
         this.messages.push({
@@ -79,17 +90,24 @@ export default {
           sender: 'hat'
         });
       } else {
-        // Display the result if it's the last question
-        this.messages.push({
-          content: `Your house is: ${this.determinedHouse}`,
-          sender: 'hat'
-        });
+        this.isTestComplete = true;
       }
-    }
+    },
+    askName() {
+      this.isNameAsked = true;
+      this.messages.push({
+        content: `Hello, ${this.username}! Let's start with your psychological research.`,
+        sender: 'user'
+      });
+      this.messages.push({
+        content: this.currentQuestion.title,
+        sender: 'hat'
+      });
+    },
   },
   created() {
     this.messages.push({
-      content: this.currentQuestion.title,
+      content: "Hello! What's your name?",
       sender: 'hat'
     });
   },
@@ -119,11 +137,13 @@ body {
   margin-top: 2vh;
   font-size: 2em;
   color: #270d3b;
+  height: auto;
 }
 
 .chat-window {
   width: 96%;  /* Set to full width */
-  height: 65%;
+  height: 75%;
+  min-height: 200px;
   border: 1px solid #e1e1e1;
   overflow-y: auto;
   background-color: white;
@@ -150,8 +170,16 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  width: calc(33% - 10px); /* Divide by three and subtract margin */
+  width: calc(33% - 10px); /* Divide by three and subtract margin for desktop view */
   text-align: center;
+}
+
+/* Media query for screens with a width of 768 pixels or less */
+@media (max-width: 768px) {
+  button {
+    width: 90%; /* Make buttons take almost the full width on small screens */
+    margin: 10px 5%; /* Center the buttons with a 5% margin on each side */
+  }
 }
 
 button:hover {
@@ -160,12 +188,41 @@ button:hover {
 
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.5s ease;
+  transition: all 5s ease; /* Adjust the timing if needed */
 }
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(30px); /* Adjust for desired slide direction */
+}
+
+.result {
+  font-size: 1.5em;
+  text-align: center;
+  margin-top: 2rem;
+  background-color: #270d3b;
+  color: white;
+  padding: 1rem;
+}
+
+input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  width: 100%;
+}
+
+.input-block {
+  width: 96%;  /* Set to full width */ 
+  display: flex;
+  flex-direction: horizontal;
+  margin: 0% 2%;
+  padding-top: 1%;
+}
+
+.input-block button {
+  width: 40%;
 }
 
 </style>
