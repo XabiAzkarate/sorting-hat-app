@@ -4,12 +4,14 @@
   <div id="app">
     <h1 class="app-title">The Sorting Hat</h1>
     <div class="chat-window">
-      <ChatMessage 
-        v-for="message in messages" 
-        :key="message.id"
-        :content="message.content"
-        :sender="message.sender"
-      />
+      <transition-group name="message-fade" tag="div">
+        <ChatMessage 
+          v-for="message in messages" 
+          :key="message.id"
+          :content="message.content"
+          :sender="message.sender"
+        />
+      </transition-group>
     </div>
     <div v-if="!isNameAsked" class="input-block">
       <input type="text" v-model="username" @keyup.enter="askName" placeholder="Enter your name" />
@@ -72,48 +74,91 @@ export default {
       if (!this.isNameAsked) {
         this.username = answer.title;
         this.isNameAsked = true;
-        this.messages.push({
-          content: this.currentQuestion.title,
-          sender: 'hat'
-        });
+        setTimeout(() => {
+          this.messages.push({
+            id: Date.now(),
+            content: this.currentQuestion.title,
+            sender: 'hat'
+          });
+        }, 800);
         return;
       }
+
       for (let house in answer.scores) {
         this.scores[house] += answer.scores[house];
       }
-      this.messages.push({ content: answer.title, sender: 'user' });
+      
+      this.messages.push({ id: Date.now(), content: answer.title, sender: 'user' });
 
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
-        this.messages.push({
-          content: this.currentQuestion.title,
-          sender: 'hat'
-        });
+        setTimeout(() => {
+          this.messages.push({
+            id: Date.now(),
+            content: this.currentQuestion.title,
+            sender: 'hat'
+          });
+        }, 800);
       } else {
-        this.isTestComplete = true;
+        setTimeout(() => {
+          this.isTestComplete = true;
+        }, 800);
       }
     },
     askName() {
       this.isNameAsked = true;
       this.messages.push({
+        id: Date.now(),
         content: `Hello, ${this.username}! Let's start with your psychological research.`,
         sender: 'user'
       });
       this.messages.push({
+        id:  Date.now(),
         content: this.currentQuestion.title,
         sender: 'hat'
       });
     },
+    smoothScroll(target) {
+      const chatWindow = this.$el.querySelector(".chat-window");
+      const startPos = chatWindow.scrollTop;
+      const distance = target - startPos;
+      const duration = 800;
+      let startTime = null;
+
+      function animation(currentTime) {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const run = ease(timeElapsed, startPos, distance, duration);
+        chatWindow.scrollTop = run;
+        if (timeElapsed < duration) requestAnimationFrame(animation);
+      }
+
+      function ease(t, b, c, d) {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+      }
+
+      requestAnimationFrame(animation);
+    },
   },
   created() {
-    this.messages.push({
-      content: "Hello! What's your name?",
-      sender: 'hat'
-    });
+    setTimeout(() => {
+      this.messages.push({
+        id: Date.now(),
+        content: "Hello! What's your name?",
+        sender: 'hat'
+      });
+    }, 800);
   },
   updated() {
-    const chatWindow = this.$el.querySelector(".chat-window");
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    this.$nextTick(() => {
+      setTimeout(() => {
+        const chatWindow = this.$el.querySelector(".chat-window");
+        this.smoothScroll(chatWindow.scrollHeight);
+      }, 200); // 100ms delay
+    });
   }
 }
 </script>
@@ -121,6 +166,10 @@ export default {
 <style>
 body {
   margin: 0;
+  background-image: url('/public/images/hat image.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 #app {
@@ -128,16 +177,18 @@ body {
   flex-direction: column;
   height: 100vh;
   font-family: 'Arial', sans-serif;
-  background-color: #e5c9f59a;
-  align-items: stretch;  /* Adjust this to stretch */
+  /* background-color: #e5c9f59a; */
+  align-items: stretch;
 }
 
 .app-title {
   text-align: center;
-  margin-top: 2vh;
   font-size: 2em;
-  color: #270d3b;
   height: auto;
+  background-color: white;
+  opacity: 0.7;
+  margin: 1% 2%;
+  border-radius: 10px;
 }
 
 .chat-window {
@@ -152,6 +203,9 @@ body {
   display: flex;
   flex-direction: column;
   margin: 0% 2%;
+  opacity: 0.7;
+  font-weight: bold;
+  scroll-behavior: smooth;
 }
 
 .answers {
@@ -160,6 +214,7 @@ body {
   display: flex;
   flex-wrap: wrap; /* Allow wrapping */
   justify-content: center; /* Center horizontally */
+  font-weight: bold;
 }
 
 button {
@@ -186,14 +241,15 @@ button:hover {
   background-color: #2c3e50; /* Slight color change on hover */
 }
 
-.list-enter-active,
-.list-leave-active {
-  transition: all 5s ease; /* Adjust the timing if needed */
+/* Enter and leave transitions */
+.message-fade-enter-active,
+.message-fade-leave-active {
+  transition: all 0.8s ease;
 }
-.list-enter-from,
-.list-leave-to {
+.message-fade-enter-from,
+.message-fade-leave-to {
   opacity: 0;
-  transform: translateY(30px); /* Adjust for desired slide direction */
+  transform: translateX(-50px);
 }
 
 .result {
@@ -223,6 +279,32 @@ input {
 
 .input-block button {
   width: 40%;
+  font-weight: bold;
+}
+
+/* Styles for Chrome, Safari, Edge */
+.chat-window::-webkit-scrollbar {
+    width: 10px; /* Adjust width of the scrollbar */
+}
+
+.chat-window::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Color of the track */
+    border-radius: 10px; /* Roundness of the track */
+}
+
+.chat-window::-webkit-scrollbar-thumb {
+    background: #888; /* Color of the scroll thumb */
+    border-radius: 10px; /* Roundness of the scroll thumb */
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Color of the scroll thumb on hover */
+}
+
+/* Styles for Firefox */
+.chat-window {
+    scrollbar-width: thin; /* Adjust width of the scrollbar */
+    scrollbar-color: #888 #f1f1f1; /* First color is thumb, second is track */
 }
 
 </style>
